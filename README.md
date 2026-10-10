@@ -15,26 +15,6 @@ proporcionados.
 El formulario "Agregar material" del mockup 6 está integrado como
 modal dentro de la pantalla de Inventario.
 
-## Requisitos
-
-- Servidor con PHP 8.x (con extensión `pdo_mysql`)
-- MySQL o MariaDB
-- XAMPP, WAMP, Laragon o similar (recomendado para probarlo en Windows)
-
-## Instalación (con XAMPP)
-
-1. Copia la carpeta `monsel_inventario` dentro de `htdocs` de tu
-   instalación de XAMPP.
-2. Inicia **Apache** y **MySQL** desde el panel de XAMPP.
-3. Abre **phpMyAdmin** (`http://localhost/phpmyadmin`).
-4. Ve a la pestaña **Importar** y selecciona el archivo
-   `database/monsel_inventario.sql`. Esto crea la base de datos
-   `monsel_inventario` con las tablas y datos de prueba.
-5. Revisa el archivo `config/db.php`: por defecto usa
-   usuario `root` sin contraseña (configuración estándar de XAMPP).
-   Si tu instalación es distinta, ajusta `$dbuser` y `$dbpass`.
-6. Abre en el navegador: `http://localhost/monsel_inventario/`
-
 ## Usuario de prueba
 
 | Usuario | Contraseña |

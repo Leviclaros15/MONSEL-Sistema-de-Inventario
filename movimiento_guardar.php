@@ -16,6 +16,13 @@ $id_proyecto   = $_POST['id_proyecto'] ?? '';
 $observaciones = trim($_POST['observaciones'] ?? '');
 $id_usuario    = $_SESSION['id_usuario'];
 
+$hoy = date('Y-m-d');
+if ($fecha < $hoy) {
+    flash_set('error', 'No puedes registrar movimientos con una fecha pasada.');
+    header('Location: movimiento.php');
+    exit;
+}
+
 if (!in_array($tipo, ['Entrada', 'Salida'], true) || $id_material === '' || $cantidad <= 0 || $ubicacion === '') {
     flash_set('error', 'Por favor completa todos los campos obligatorios con valores válidos.');
     header('Location: movimiento.php');
@@ -28,12 +35,24 @@ try {
     $pdo->beginTransaction();
 
     // Bloquea la fila del material para evitar condiciones de carrera
-    $stmt = $pdo->prepare('SELECT cantidad FROM materiales WHERE id_material = ? FOR UPDATE');
+    $stmt = $pdo->prepare('
+        SELECT m.cantidad, m.unidad_medida, c.nombre_categoria
+        FROM materiales m
+        JOIN categorias c ON c.id_categoria = m.id_categoria
+        WHERE m.id_material = ?
+        FOR UPDATE
+    ');
     $stmt->execute([$id_material]);
     $material = $stmt->fetch();
 
     if (!$material) {
         throw new Exception('El material seleccionado ya no existe.');
+    }
+
+    $categoriaNom = strtolower($material['nombre_categoria'] ?? '');
+    $unidadNom    = strtolower($material['unidad_medida'] ?? '');
+    if ((strpos($categoriaNom, 'herramienta') !== false || strpos($unidadNom, 'unidad') !== false || strpos($unidadNom, 'pieza') !== false) && fmod($cantidad, 1) != 0) {
+        throw new Exception('Para herramientas o artículos medidos en unidades, la cantidad debe ser un número entero (sin decimales).');
     }
 
     $stockActual = (float) $material['cantidad'];

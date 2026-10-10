@@ -66,6 +66,7 @@ $errorMsg = flash_get('error');
               <th>Nombre</th>
               <th>Categoría</th>
               <th>Cantidad</th>
+              <th>Stock Mínimo</th>
               <th>Ubicación</th>
               <th>Estado</th>
               <th>Acciones</th>
@@ -73,20 +74,29 @@ $errorMsg = flash_get('error');
           </thead>
           <tbody>
             <?php if (empty($materiales)): ?>
-              <tr><td colspan="7" class="empty-state">No se encontraron materiales.</td></tr>
+              <tr><td colspan="8" class="empty-state">No se encontraron materiales.</td></tr>
             <?php else: ?>
               <?php foreach ($materiales as $m): ?>
-                <tr>
-                  <td><?= htmlspecialchars($m['codigo']) ?></td>
+                <?php 
+                  $esAgotado = ((float)$m['cantidad'] <= 0);
+                  $esBajoStock = ((float)$m['cantidad'] <= (float)$m['stock_minimo'] && !$esAgotado);
+                ?>
+                <tr class="<?= $esAgotado ? 'row-agotado' : ($esBajoStock ? 'row-alerta' : '') ?>">
+                  <td><strong><?= htmlspecialchars($m['codigo']) ?></strong></td>
                   <td><?= htmlspecialchars($m['nombre']) ?></td>
                   <td><?= htmlspecialchars($m['nombre_categoria']) ?></td>
-                  <td><?= rtrim(rtrim(number_format((float)$m['cantidad'], 2, '.', ''), '0'), '.') ?> <?= htmlspecialchars($m['unidad_medida']) ?></td>
+                  <td style="font-weight:600; color: <?= $esAgotado ? 'var(--red-text)' : ($esBajoStock ? 'var(--amber-text)' : 'inherit') ?>;">
+                    <?= rtrim(rtrim(number_format((float)$m['cantidad'], 2, '.', ''), '0'), '.') ?> <?= htmlspecialchars($m['unidad_medida']) ?>
+                  </td>
+                  <td><?= rtrim(rtrim(number_format((float)$m['stock_minimo'], 2, '.', ''), '0'), '.') ?> <?= htmlspecialchars($m['unidad_medida']) ?></td>
                   <td><?= htmlspecialchars($m['ubicacion']) ?></td>
                   <td>
-                    <?php if ($m['estado'] === 'Disponible'): ?>
-                      <span class="badge badge-green">Disponible</span>
-                    <?php else: ?>
+                    <?php if ($esAgotado): ?>
                       <span class="badge badge-red">Agotado</span>
+                    <?php elseif ($esBajoStock): ?>
+                      <span class="badge badge-amber">Stock Bajo</span>
+                    <?php else: ?>
+                      <span class="badge badge-green">Disponible</span>
                     <?php endif; ?>
                   </td>
                   <td class="action-icons">
@@ -133,20 +143,38 @@ $errorMsg = flash_get('error');
         </div>
         <div class="form-field">
           <label>Categoría *</label>
-          <select name="id_categoria" id="f_id_categoria" required>
+          <select name="id_categoria" id="f_id_categoria" onchange="alCambiarCategoriaOUnidadModal()" required>
             <option value="">Selecciona una categoría</option>
             <?php foreach ($categorias as $c): ?>
-              <option value="<?= $c['id_categoria'] ?>"><?= htmlspecialchars($c['nombre_categoria']) ?></option>
+              <option value="<?= $c['id_categoria'] ?>" data-nombre="<?= htmlspecialchars($c['nombre_categoria']) ?>">
+                <?= htmlspecialchars($c['nombre_categoria']) ?>
+              </option>
             <?php endforeach; ?>
           </select>
         </div>
         <div class="form-field">
           <label>Unidad de medida *</label>
-          <input type="text" name="unidad_medida" id="f_unidad_medida" placeholder="metros, unidades..." required>
+          <select name="unidad_medida" id="f_unidad_medida" onchange="alCambiarCategoriaOUnidadModal()" required>
+            <option value="">Selecciona unidad</option>
+            <option value="unidades">Unidades</option>
+            <option value="piezas">Piezas</option>
+            <option value="metros">Metros</option>
+            <option value="rollos">Rollos</option>
+            <option value="cajas">Cajas</option>
+            <option value="paquetes">Paquetes</option>
+            <option value="litros">Litros</option>
+            <option value="kilogramos">Kilogramos</option>
+            <option value="libras">Libras</option>
+            <option value="galones">Galones</option>
+          </select>
         </div>
         <div class="form-field">
-          <label>Cantidad *</label>
+          <label>Cantidad * <span id="f_modal_cant_hint" style="font-weight:400; color:var(--text-muted); font-size:12px;"></span></label>
           <input type="number" step="0.01" min="0" name="cantidad" id="f_cantidad" required>
+        </div>
+        <div class="form-field">
+          <label>Stock Mínimo (Alerta) *</label>
+          <input type="number" step="0.01" min="0" name="stock_minimo" id="f_stock_minimo" placeholder="0" required>
         </div>
         <div class="form-field">
           <label>Ubicación *</label>

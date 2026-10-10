@@ -4,7 +4,12 @@ require_once __DIR__ . '/config/db.php';
 
 $pageTitle = 'Registrar movimiento';
 
-$materiales = $pdo->query('SELECT id_material, codigo, nombre, cantidad, unidad_medida FROM materiales ORDER BY nombre')->fetchAll();
+$materiales = $pdo->query('
+    SELECT m.id_material, m.codigo, m.nombre, m.cantidad, m.unidad_medida, c.nombre_categoria
+    FROM materiales m
+    JOIN categorias c ON c.id_categoria = m.id_categoria
+    ORDER BY m.nombre
+')->fetchAll();
 $proyectos = $pdo->query('SELECT id_proyecto, nombre_proyecto FROM proyectos ORDER BY nombre_proyecto')->fetchAll();
 
 $historial = $pdo->query("
@@ -58,22 +63,25 @@ $tipoActivo = $_GET['tipo'] ?? 'Entrada';
           <div class="form-grid">
             <div class="form-field">
               <label>Fecha *</label>
-              <input type="date" name="fecha" value="<?= date('Y-m-d') ?>" required>
+              <input type="date" name="fecha" id="f_fecha" value="<?= date('Y-m-d') ?>" min="<?= date('Y-m-d') ?>" required>
             </div>
             <div class="form-field">
               <label>Material *</label>
-              <select name="id_material" required>
+              <select name="id_material" id="f_mov_material" onchange="alCambiarMaterialMovimiento()" required>
                 <option value="">Selecciona un material</option>
                 <?php foreach ($materiales as $m): ?>
-                  <option value="<?= $m['id_material'] ?>">
+                  <option value="<?= $m['id_material'] ?>"
+                          data-categoria="<?= htmlspecialchars($m['nombre_categoria']) ?>"
+                          data-unidad="<?= htmlspecialchars($m['unidad_medida']) ?>"
+                          data-stock="<?= (float)$m['cantidad'] ?>">
                     <?= htmlspecialchars($m['codigo'] . ' — ' . $m['nombre']) ?> (stock: <?= rtrim(rtrim(number_format((float)$m['cantidad'], 2, '.', ''), '0'), '.') ?> <?= htmlspecialchars($m['unidad_medida']) ?>)
                   </option>
                 <?php endforeach; ?>
               </select>
             </div>
             <div class="form-field">
-              <label>Cantidad *</label>
-              <input type="number" step="0.01" min="0.01" name="cantidad" placeholder="Ej: 10" required>
+              <label>Cantidad * <span id="label_info_unidad" style="font-weight:400; color:var(--text-muted); font-size:12px;"></span></label>
+              <input type="number" step="0.01" min="0.01" name="cantidad" id="f_mov_cantidad" placeholder="Ej: 10" required>
             </div>
             <div class="form-field">
               <label>Ubicación *</label>
@@ -150,7 +158,53 @@ function cambiarTipo(tipo) {
   document.querySelectorAll('.tab-btn').forEach(function (btn) {
     btn.classList.toggle('active', btn.dataset.tipo === tipo);
   });
+  alCambiarMaterialMovimiento();
 }
+
+function alCambiarMaterialMovimiento() {
+  const sel = document.getElementById('f_mov_material');
+  const opt = sel.options[sel.selectedIndex];
+  const inputCant = document.getElementById('f_mov_cantidad');
+  const labelInfo = document.getElementById('label_info_unidad');
+  const tipo = document.getElementById('tipo_movimiento').value;
+
+  if (!opt || !opt.value) {
+    inputCant.step = '0.01';
+    inputCant.min = '0.01';
+    inputCant.removeAttribute('max');
+    if (labelInfo) labelInfo.textContent = '';
+    return;
+  }
+
+  const categoria = (opt.dataset.categoria || '').toLowerCase();
+  const unidad = (opt.dataset.unidad || '').toLowerCase();
+  const stock = parseFloat(opt.dataset.stock) || 0;
+
+  const esHerramientaOUnidad = categoria.includes('herramienta') || unidad.includes('unidad') || unidad.includes('pieza');
+
+  if (esHerramientaOUnidad) {
+    inputCant.step = '1';
+    inputCant.min = '1';
+    if (inputCant.value && inputCant.value % 1 !== 0) {
+      inputCant.value = Math.round(inputCant.value) || 1;
+    }
+    if (labelInfo) labelInfo.textContent = '(Unidades enteras)';
+  } else {
+    inputCant.step = '0.01';
+    inputCant.min = '0.01';
+    if (labelInfo) labelInfo.textContent = '(' + (opt.dataset.unidad || 'decimales permitidos') + ')';
+  }
+
+  // Si es salida, no permitir pedir más del stock existente
+  if (tipo === 'Salida') {
+    inputCant.max = stock;
+  } else {
+    inputCant.removeAttribute('max');
+  }
+}
+
+// Inicializar al cargar
+document.addEventListener('DOMContentLoaded', alCambiarMaterialMovimiento);
 </script>
 </body>
 </html>

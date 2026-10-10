@@ -1,8 +1,52 @@
+function alCambiarCategoriaOUnidadModal() {
+  const catSel = document.getElementById('f_id_categoria');
+  const unitSel = document.getElementById('f_unidad_medida');
+  const inputCant = document.getElementById('f_cantidad');
+  const inputStockMin = document.getElementById('f_stock_minimo');
+  const hint = document.getElementById('f_modal_cant_hint');
+
+  const catText = (catSel && catSel.selectedIndex >= 0) ? (catSel.options[catSel.selectedIndex].dataset.nombre || catSel.options[catSel.selectedIndex].text || '').toLowerCase() : '';
+  const unitVal = (unitSel && unitSel.value ? unitSel.value : '').toLowerCase();
+
+  const esHerramientaOUnidad = catText.includes('herramienta') || unitVal.includes('unidad') || unitVal.includes('pieza');
+
+  if (esHerramientaOUnidad) {
+    if (inputCant) {
+      inputCant.step = '1';
+      inputCant.min = '0';
+      if (inputCant.value && inputCant.value % 1 !== 0) {
+        inputCant.value = Math.round(inputCant.value);
+      }
+    }
+    if (inputStockMin) {
+      inputStockMin.step = '1';
+      inputStockMin.min = '0';
+      if (inputStockMin.value && inputStockMin.value % 1 !== 0) {
+        inputStockMin.value = Math.round(inputStockMin.value);
+      }
+    }
+    if (hint) hint.textContent = '(Solo números enteros)';
+  } else {
+    if (inputCant) {
+      inputCant.step = '0.01';
+      inputCant.min = '0';
+    }
+    if (inputStockMin) {
+      inputStockMin.step = '0.01';
+      inputStockMin.min = '0';
+    }
+    if (hint) hint.textContent = '(Permite decimales)';
+  }
+}
+
 function abrirModalAgregar() {
   const form = document.querySelector('#modalMaterial form');
   form.reset();
   document.getElementById('f_id_material').value = '';
+  document.getElementById('f_stock_minimo').value = '0';
+  document.getElementById('f_unidad_medida').value = '';
   document.getElementById('modalTitulo').textContent = 'Agregar material';
+  alCambiarCategoriaOUnidadModal();
   document.getElementById('modalMaterial').classList.add('open');
 }
 
@@ -12,11 +56,33 @@ function abrirModalEditar(material) {
   document.getElementById('f_codigo').value = material.codigo;
   document.getElementById('f_nombre').value = material.nombre;
   document.getElementById('f_id_categoria').value = material.id_categoria;
-  document.getElementById('f_unidad_medida').value = material.unidad_medida;
+  
+  // Asignar valor a la lista de unidad_medida (o crear opción si era personalizada)
+  const unitSelect = document.getElementById('f_unidad_medida');
+  const unitVal = (material.unidad_medida || '').toLowerCase();
+  let found = false;
+  for (let i = 0; i < unitSelect.options.length; i++) {
+    if (unitSelect.options[i].value.toLowerCase() === unitVal) {
+      unitSelect.selectedIndex = i;
+      found = true;
+      break;
+    }
+  }
+  if (!found && unitVal) {
+    const opt = document.createElement('option');
+    opt.value = material.unidad_medida;
+    opt.text = material.unidad_medida;
+    unitSelect.add(opt);
+    unitSelect.value = material.unidad_medida;
+  }
+
   document.getElementById('f_cantidad').value = material.cantidad;
+  document.getElementById('f_stock_minimo').value = material.stock_minimo || 0;
   document.getElementById('f_ubicacion').value = material.ubicacion;
   document.getElementById('f_estado').value = material.estado;
   document.getElementById('f_observaciones').value = material.observaciones || '';
+  
+  alCambiarCategoriaOUnidadModal();
   document.getElementById('modalMaterial').classList.add('open');
 }
 

@@ -61,13 +61,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <div class="login-panel">
     <div class="login-box">
-      <div class="brand">
-        <div class="bolt">&#9889;</div>
+      <a href="dashboard.php" class="brand">
+        <img src="assets/imgs/logo_monsel.png" alt="MONSEL" class="brand-logo">
         <div>
           <strong>MONSEL</strong>
-          <span>S.A. de C.V.</span>
+          <span>Sistema de inventario</span>
         </div>
-      </div>
+      </a>
 
       <h1>Inicio de sesión</h1>
       <p class="subtitle">Sistema de Inventario</p>

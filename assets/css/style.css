@@ -65,11 +65,12 @@ button { font-family: inherit; cursor: pointer; }
 }
 .login-box { width: 100%; max-width: 360px; }
 .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
-.brand .bolt {
-  width: 38px; height: 38px; border-radius: 9px;
-  background: var(--blue-600);
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 20px;
+.brand .brand-logo {
+  width: 50px; height: 50px;
+  border-radius: 9px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
 }
 .brand strong { display: block; font-size: 18px; line-height: 1.1; }
 .brand span { display: block; font-size: 12px; color: var(--text-muted); }
@@ -125,12 +126,16 @@ button { font-family: inherit; cursor: pointer; }
   padding: 10px 12px; border-radius: 8px; font-size: 14px;
   color: #a9b6cc;
 }
-.sidebar nav a .ico { width: 18px; text-align: center; }
+.sidebar nav a .ico { width: 18px; height: 18px; flex-shrink: 0; filter: brightness(0) invert(0.7); }
+.sidebar nav a:hover .ico,
+.sidebar nav a.active .ico { filter: brightness(0) invert(1); }
 .sidebar nav a:hover { background: rgba(255,255,255,0.06); color: #fff; }
 .sidebar nav a.active { background: var(--blue-600); color: #fff; }
 .sidebar .logout { margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.08); }
-.sidebar .logout a { color: #a9b6cc; display: flex; gap: 10px; padding: 10px 12px; font-size: 14px; border-radius: 8px; }
+.sidebar .logout a { color: #a9b6cc; display: flex; align-items: center; gap: 10px; padding: 10px 12px; font-size: 14px; border-radius: 8px; }
+.sidebar .logout a .ico { width: 18px; height: 18px; flex-shrink: 0; filter: brightness(0) invert(0.7); }
 .sidebar .logout a:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.sidebar .logout a:hover .ico { filter: brightness(0) invert(1); }
 
 .main { display: flex; flex-direction: column; min-width: 0; }
 .topbar {
@@ -151,13 +156,22 @@ button { font-family: inherit; cursor: pointer; }
 .page-header p { margin: 4px 0 0; color: var(--text-muted); font-size: 13.5px; }
 
 /* ---------- KPI cards ---------- */
-.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
 .kpi-card {
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 18px; box-shadow: var(--shadow);
 }
+.kpi-card-alert {
+  border-color: #f5c9c9;
+  background: #fff8f8;
+}
 .kpi-card .label { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
 .kpi-card .value { font-size: 26px; font-weight: 700; }
+.text-red { color: var(--red-text); }
+
+.mb-4 { margin-bottom: 24px; }
+.row-alerta { background-color: #fffdf5; }
+.row-agotado { background-color: #fff5f5; }
 
 /* ---------- Cards / tables ---------- */
 .card {

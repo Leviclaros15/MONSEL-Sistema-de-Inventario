@@ -17,6 +17,17 @@ $salidasMes = (float) $stmtSalidas->fetchColumn();
 
 $proyectosActivos = (int) $pdo->query("SELECT COUNT(*) FROM proyectos WHERE estado IN ('En progreso','Pendiente')")->fetchColumn();
 
+// Alertas de stock bajo o agotado
+$stmtAlertas = $pdo->query("
+    SELECT mat.id_material, mat.codigo, mat.nombre, mat.cantidad, mat.stock_minimo, mat.unidad_medida, c.nombre_categoria
+    FROM materiales mat
+    JOIN categorias c ON c.id_categoria = mat.id_categoria
+    WHERE mat.cantidad <= mat.stock_minimo
+    ORDER BY mat.cantidad ASC
+");
+$materialesBajoStock = $stmtAlertas->fetchAll();
+$totalBajoStock = count($materialesBajoStock);
+
 $recientes = $pdo->query("
     SELECT m.fecha_movimiento, m.tipo_movimiento, m.cantidad, mat.nombre AS material_nombre
     FROM movimientos m
@@ -65,7 +76,57 @@ $recientes = $pdo->query("
           <div class="label">Proyectos activos</div>
           <div class="value"><?= $proyectosActivos ?></div>
         </div>
+        <div class="kpi-card <?= $totalBajoStock > 0 ? 'kpi-card-alert' : '' ?>">
+          <div class="label">Stock bajo / Crítico</div>
+          <div class="value <?= $totalBajoStock > 0 ? 'text-red' : '' ?>">
+            <?= $totalBajoStock ?>
+          </div>
+        </div>
       </div>
+
+      <?php if ($totalBajoStock > 0): ?>
+      <div class="card mb-4" style="border-left: 4px solid var(--red-text);">
+        <div class="card-header">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="badge badge-red">Alerta</span>
+            <h3 style="color: var(--red-text);">Materiales que requieren reabastecimiento</h3>
+          </div>
+          <a href="inventario.php" class="btn btn-outline">Ir a inventario</a>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Material</th>
+              <th>Categoría</th>
+              <th>Stock Actual</th>
+              <th>Stock Mínimo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($materialesBajoStock as $m): ?>
+              <tr>
+                <td><strong><?= htmlspecialchars($m['codigo']) ?></strong></td>
+                <td><?= htmlspecialchars($m['nombre']) ?></td>
+                <td><?= htmlspecialchars($m['nombre_categoria']) ?></td>
+                <td style="font-weight:700; color: <?= $m['cantidad'] <= 0 ? 'var(--red-text)' : 'var(--amber-text)' ?>;">
+                  <?= rtrim(rtrim(number_format((float)$m['cantidad'], 2, '.', ''), '0'), '.') ?> <?= htmlspecialchars($m['unidad_medida']) ?>
+                </td>
+                <td><?= rtrim(rtrim(number_format((float)$m['stock_minimo'], 2, '.', ''), '0'), '.') ?> <?= htmlspecialchars($m['unidad_medida']) ?></td>
+                <td>
+                  <?php if ($m['cantidad'] <= 0): ?>
+                    <span class="badge badge-red">Agotado</span>
+                  <?php else: ?>
+                    <span class="badge badge-amber">Stock Bajo</span>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+      <?php endif; ?>
 
       <div class="card">
         <div class="card-header">
