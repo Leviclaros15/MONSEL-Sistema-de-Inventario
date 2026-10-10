@@ -10,7 +10,14 @@ foreach (explode(' ', trim($nombreUsuario)) as $palabra) {
 $iniciales = strtoupper(substr($iniciales, 0, 2));
 ?>
 <header class="topbar">
-  <h1><?= htmlspecialchars($pageTitle ?? '') ?></h1>
+  <div style="display:flex; align-items:center; gap:12px;">
+    <button type="button" class="menu-toggle" id="btnMenuToggle" aria-label="Abrir menú" onclick="toggleSidebar()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <h1><?= htmlspecialchars($pageTitle ?? '') ?></h1>
+  </div>
   <div class="user">
     <span><?= htmlspecialchars($nombreUsuario) ?></span>
     <div class="avatar"><?= htmlspecialchars($iniciales) ?></div>

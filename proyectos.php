@@ -140,5 +140,6 @@ document.addEventListener('click', function (e) {
   if (overlay && e.target === overlay) overlay.classList.remove('open');
 });
 </script>
+<script src="assets/js/main.js"></script>
 </body>
 </html>

@@ -6,14 +6,18 @@ function nav_active(string $file, string $current): string
     return $file === $current ? 'active' : '';
 }
 ?>
-<aside class="sidebar">
-  <a href="dashboard.php" class="brand">
-    <img src="assets/imgs/logo_monsel.png" alt="MONSEL" class="brand-logo">
-    <div>
-      <strong>MONSEL</strong>
-      <span>Sistema de inventario</span>
-    </div>
-  </a>
+<div class="sidebar-backdrop" id="sidebarBackdrop" onclick="toggleSidebar(false)"></div>
+<aside class="sidebar" id="appSidebar">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+    <a href="dashboard.php" class="brand" style="margin-bottom:0; flex:1;">
+      <img src="assets/imgs/logo_monsel.png" alt="MONSEL" class="brand-logo">
+      <div>
+        <strong>MONSEL</strong>
+        <span>Sistema de inventario</span>
+      </div>
+    </a>
+    <button type="button" class="sidebar-close-btn" onclick="toggleSidebar(false)" aria-label="Cerrar menú">&#10005;</button>
+  </div>
   <nav>
     <a href="dashboard.php" class="<?= nav_active('dashboard.php', $currentPage) ?>"><img src="assets/icons/home.svg" alt="" class="ico"> Inicio</a>
     <a href="inventario.php" class="<?= nav_active('inventario.php', $currentPage) ?>"><img src="assets/icons/inventory.svg" alt="" class="ico"> Inventario</a>

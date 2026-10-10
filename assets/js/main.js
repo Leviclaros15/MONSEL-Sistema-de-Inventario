@@ -97,3 +97,21 @@ document.addEventListener('click', function (e) {
     cerrarModal();
   }
 });
+
+// Control de apertura/cierre del sidebar responsive
+function toggleSidebar(forceState) {
+  const sidebar = document.getElementById('appSidebar');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  if (!sidebar) return;
+
+  const shouldOpen = typeof forceState === 'boolean' 
+    ? forceState 
+    : !sidebar.classList.contains('open');
+
+  sidebar.classList.toggle('open', shouldOpen);
+  if (backdrop) {
+    backdrop.classList.toggle('active', shouldOpen);
+  }
+  document.body.style.overflow = shouldOpen ? 'hidden' : '';
+}
+

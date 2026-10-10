@@ -4,7 +4,57 @@ require_once __DIR__ . '/config/db.php';
 
 $pageTitle = 'Inventario';
 
-$categorias = $pdo->query('SELECT * FROM categorias ORDER BY nombre_categoria')->fetchAll();
+// Operaciones de Categorías (Crear y Eliminar)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action_categoria'])) {
+    $actionCat = $_POST['action_categoria'];
+    
+    if ($actionCat === 'crear') {
+        $nombreCat = trim($_POST['nombre_categoria'] ?? '');
+        $descCat   = trim($_POST['descripcion'] ?? '');
+        if ($nombreCat !== '') {
+            try {
+                $stmtNew = $pdo->prepare('INSERT INTO categorias (nombre_categoria, descripcion) VALUES (?, ?)');
+                $stmtNew->execute([$nombreCat, $descCat]);
+                flash_set('success', 'Categoría "' . $nombreCat . '" agregada exitosamente.');
+            } catch (PDOException $e) {
+                if ($e->getCode() === '23000') {
+                    flash_set('error', 'Ya existe una categoría con ese nombre.');
+                } else {
+                    flash_set('error', 'Error al guardar la categoría.');
+                }
+            }
+        } else {
+            flash_set('error', 'El nombre de la categoría es obligatorio.');
+        }
+    } elseif ($actionCat === 'eliminar') {
+        $idCat = (int) ($_POST['id_categoria'] ?? 0);
+        $check = $pdo->prepare('SELECT COUNT(*) FROM materiales WHERE id_categoria = ?');
+        $check->execute([$idCat]);
+        $totalAsociados = (int) $check->fetchColumn();
+        
+        if ($totalAsociados > 0) {
+            flash_set('error', "No se puede eliminar la categoría: tiene $totalAsociados material(es) asociado(s).");
+        } else {
+            try {
+                $stmtDel = $pdo->prepare('DELETE FROM categorias WHERE id_categoria = ?');
+                $stmtDel->execute([$idCat]);
+                flash_set('success', 'Categoría eliminada correctamente.');
+            } catch (PDOException $e) {
+                flash_set('error', 'No se pudo eliminar la categoría.');
+            }
+        }
+    }
+    header('Location: inventario.php');
+    exit;
+}
+
+$categorias = $pdo->query('
+    SELECT c.*, COUNT(m.id_material) AS total_materiales 
+    FROM categorias c 
+    LEFT JOIN materiales m ON m.id_categoria = c.id_categoria 
+    GROUP BY c.id_categoria 
+    ORDER BY c.nombre_categoria
+')->fetchAll();
 
 $busqueda = trim($_GET['q'] ?? '');
 
@@ -56,7 +106,13 @@ $errorMsg = flash_get('error');
             <input type="text" name="q" class="search-input" placeholder="Buscar material..." value="<?= htmlspecialchars($busqueda) ?>">
             <button type="submit" class="btn btn-outline">Buscar</button>
           </form>
-          <button class="btn btn-blue" onclick="abrirModalAgregar()">+ Agregar material</button>
+          <div style="display:flex; gap:10px;">
+            <button type="button" class="btn btn-outline" onclick="abrirModalGestionCategorias()">
+              <img src="assets/icons/category.svg" alt="" style="width:16px; height:16px; object-fit:contain; opacity:0.75;">
+              Categorías
+            </button>
+            <button type="button" class="btn btn-blue" onclick="abrirModalAgregar()">+ Agregar material</button>
+          </div>
         </div>
 
         <table>
@@ -142,7 +198,10 @@ $errorMsg = flash_get('error');
           <input type="text" name="nombre" id="f_nombre" placeholder="Cable THHN #12" required>
         </div>
         <div class="form-field">
-          <label>Categoría *</label>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="margin-bottom:0;">Categoría *</label>
+            <a href="javascript:void(0)" onclick="abrirModalGestionCategorias()" style="font-size:12px; color:var(--blue-600); font-weight:600;">+ Nueva categoría</a>
+          </div>
           <select name="id_categoria" id="f_id_categoria" onchange="alCambiarCategoriaOUnidadModal()" required>
             <option value="">Selecciona una categoría</option>
             <?php foreach ($categorias as $c): ?>
@@ -201,6 +260,92 @@ $errorMsg = flash_get('error');
   </div>
 </div>
 
+<!-- Modal Gestión de Categorías -->
+<div class="modal-overlay" id="modalGestionCategorias">
+  <div class="modal-box" style="max-width: 650px;">
+    <div class="card-header">
+      <h3>Gestión de Categorías</h3>
+      <button type="button" class="close-x" onclick="cerrarModalGestionCategorias()">&#10005;</button>
+    </div>
+
+    <div style="padding: 20px;">
+      <!-- Formulario para agregar nueva categoría -->
+      <form method="post" action="inventario.php" style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:20px;">
+        <input type="hidden" name="action_categoria" value="crear">
+        <h4 style="margin:0 0 12px; font-size:14px; font-weight:700;">+ Registrar nueva categoría</h4>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="display:block; font-size:12.5px; font-weight:600; margin-bottom:4px;">Nombre *</label>
+            <input type="text" name="nombre_categoria" placeholder="Ej: Iluminación, Tubería" required style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px;">
+          </div>
+          <div>
+            <label style="display:block; font-size:12.5px; font-weight:600; margin-bottom:4px;">Descripción</label>
+            <input type="text" name="descripcion" placeholder="Opcional..." style="width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; font-size:13px;">
+          </div>
+        </div>
+        <div style="display:flex; justify-content:flex-end;">
+          <button type="submit" class="btn btn-blue" style="padding:7px 14px; font-size:13px;">Guardar categoría</button>
+        </div>
+      </form>
+
+      <!-- Tabla de categorías existentes -->
+      <h4 style="margin:0 0 10px; font-size:14px; font-weight:700;">Categorías existentes</h4>
+      <div style="border:1px solid var(--border); border-radius:8px; overflow:hidden;">
+        <table style="font-size:13px;">
+          <thead>
+            <tr>
+              <th style="padding:8px 14px;">Categoría</th>
+              <th style="padding:8px 14px;">Descripción</th>
+              <th style="padding:8px 14px;">Materiales</th>
+              <th style="padding:8px 14px; text-align:center;">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($categorias as $cat): ?>
+              <tr>
+                <td style="padding:9px 14px;"><strong><?= htmlspecialchars($cat['nombre_categoria']) ?></strong></td>
+                <td style="padding:9px 14px; color:var(--text-muted);"><?= htmlspecialchars($cat['descripcion'] ?: '—') ?></td>
+                <td style="padding:9px 14px;">
+                  <span class="badge <?= $cat['total_materiales'] > 0 ? 'badge-green' : 'badge-amber' ?>" style="font-size:11px;">
+                    <?= $cat['total_materiales'] ?>
+                  </span>
+                </td>
+                <td style="padding:9px 14px; text-align:center;">
+                  <?php if ($cat['total_materiales'] == 0): ?>
+                    <form method="post" action="inventario.php" onsubmit="return confirm('¿Eliminar la categoría <?= htmlspecialchars($cat['nombre_categoria']) ?>?');" style="display:inline;">
+                      <input type="hidden" name="action_categoria" value="eliminar">
+                      <input type="hidden" name="id_categoria" value="<?= $cat['id_categoria'] ?>">
+                      <button type="submit" class="delete" title="Eliminar categoría" style="background:none; border:none; cursor:pointer; color:var(--red-text); font-size:14px;">&#128465;</button>
+                    </form>
+                  <?php else: ?>
+                    <span title="No se puede eliminar: tiene materiales asignados" style="color:var(--text-muted); font-size:12px; cursor:not-allowed;">🔒</span>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function abrirModalGestionCategorias() {
+  document.getElementById('modalGestionCategorias').classList.add('open');
+}
+
+function cerrarModalGestionCategorias() {
+  document.getElementById('modalGestionCategorias').classList.remove('open');
+}
+
+document.addEventListener('click', function (e) {
+  const overlayCat = document.getElementById('modalGestionCategorias');
+  if (overlayCat && e.target === overlayCat) {
+    cerrarModalGestionCategorias();
+  }
+});
+</script>
 <script src="assets/js/main.js"></script>
 </body>
 </html>

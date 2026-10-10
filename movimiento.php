@@ -206,5 +206,6 @@ function alCambiarMaterialMovimiento() {
 // Inicializar al cargar
 document.addEventListener('DOMContentLoaded', alCambiarMaterialMovimiento);
 </script>
+<script src="assets/js/main.js"></script>
 </body>
 </html>
