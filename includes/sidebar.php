@@ -23,7 +23,10 @@ function nav_active(string $file, string $current): string
     <a href="inventario.php" class="<?= nav_active('inventario.php', $currentPage) ?>"><img src="assets/icons/inventory.svg" alt="" class="ico"> Inventario</a>
     <a href="movimiento.php" class="<?= nav_active('movimiento.php', $currentPage) ?>"><img src="assets/icons/transfer.svg" alt="" class="ico"> Entradas / Salidas</a>
     <a href="proyectos.php" class="<?= nav_active('proyectos.php', $currentPage) ?>"><img src="assets/icons/projects.svg" alt="" class="ico"> Proyectos realizados</a>
+    <?php if ($_SESSION['rol'] === 'administrador'): ?>
+    <a href="usuarios.php" class="<?= nav_active('usuarios.php', $currentPage) ?>"><img src="assets/icons/users.svg" alt="" class="ico"> Usuarios</a>
     <a href="auditoria.php" class="<?= nav_active('auditoria.php', $currentPage) ?>"><img src="assets/icons/audit.svg" alt="" class="ico"> Auditoría</a>
+    <?php endif; ?>
 
   </nav>
   <div class="logout">

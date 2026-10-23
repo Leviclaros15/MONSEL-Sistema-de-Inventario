@@ -12,18 +12,12 @@ $codigo        = trim($_POST['codigo'] ?? '');
 $nombre        = trim($_POST['nombre'] ?? '');
 $id_categoria  = $_POST['id_categoria'] ?? '';
 $unidad_medida = trim($_POST['unidad_medida'] ?? '');
-$cantidad      = (float) ($_POST['cantidad'] ?? 0);
 $stock_minimo  = (float) ($_POST['stock_minimo'] ?? 0);
 $ubicacion     = trim($_POST['ubicacion'] ?? '');
-$estado        = $_POST['estado'] ?? 'Disponible';
 $observaciones = trim($_POST['observaciones'] ?? '');
 
-if ($cantidad <= 0) {
-    $estado = 'Agotado';
-}
-
-if ($cantidad < 0 || $stock_minimo < 0) {
-    flash_set('error', 'La cantidad y el stock mínimo no pueden ser números negativos.');
+if ($stock_minimo < 0) {
+    flash_set('error', 'El stock mínimo no puede ser negativo.');
     header('Location: inventario.php');
     exit;
 }
@@ -34,39 +28,25 @@ if ($codigo === '' || $nombre === '' || $id_categoria === '' || $unidad_medida =
     exit;
 }
 
-// Validar si la categoría es Herramientas o la unidad es unidades/piezas
-$stmtCat = $pdo->prepare('SELECT nombre_categoria FROM categorias WHERE id_categoria = ?');
-$stmtCat->execute([$id_categoria]);
-$nombreCat = strtolower($stmtCat->fetchColumn() ?: '');
-$unidadNom = strtolower($unidad_medida);
-
-if ((strpos($nombreCat, 'herramienta') !== false || strpos($unidadNom, 'unidad') !== false || strpos($unidadNom, 'pieza') !== false)) {
-    if (fmod($cantidad, 1) != 0 || fmod($stock_minimo, 1) != 0) {
-        flash_set('error', 'Para herramientas o artículos medidos en unidades, la cantidad y stock mínimo deben ser números enteros.');
-        header('Location: inventario.php');
-        exit;
-    }
-}
-
 try {
     if ($id_material !== '') {
-        // Actualizar material existente
+        // Actualizar material existente (sin modificar cantidad - se hace por movimientos)
         $stmt = $pdo->prepare("
             UPDATE materiales
             SET id_categoria = ?, codigo = ?, nombre = ?, unidad_medida = ?,
-                cantidad = ?, stock_minimo = ?, ubicacion = ?, estado = ?, observaciones = ?
+                stock_minimo = ?, ubicacion = ?, observaciones = ?
             WHERE id_material = ?
         ");
-        $stmt->execute([$id_categoria, $codigo, $nombre, $unidad_medida, $cantidad, $stock_minimo, $ubicacion, $estado, $observaciones, $id_material]);
-        flash_set('success', 'Material actualizado correctamente.');
+        $stmt->execute([$id_categoria, $codigo, $nombre, $unidad_medida, $stock_minimo, $ubicacion, $observaciones, $id_material]);
+        flash_set('success', 'Material actualizado correctamente. Nota: El stock solo se modifica mediante entradas/salidas.');
     } else {
-        // Insertar nuevo material
+        // Insertar nuevo material con cantidad 0 (se abastece por movimientos)
         $stmt = $pdo->prepare("
             INSERT INTO materiales (id_categoria, codigo, nombre, unidad_medida, cantidad, stock_minimo, ubicacion, estado, observaciones)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, 0, ?, ?, 'Agotado', ?)
         ");
-        $stmt->execute([$id_categoria, $codigo, $nombre, $unidad_medida, $cantidad, $stock_minimo, $ubicacion, $estado, $observaciones]);
-        flash_set('success', 'Material agregado correctamente.');
+        $stmt->execute([$id_categoria, $codigo, $nombre, $unidad_medida, $stock_minimo, $ubicacion, $observaciones]);
+        flash_set('success', 'Material agregado correctamente. Registra una entrada para agregar stock.');
     }
 } catch (PDOException $e) {
     if ($e->getCode() === '23000') {

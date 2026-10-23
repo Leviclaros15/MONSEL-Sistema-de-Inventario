@@ -61,8 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <div class="login-panel">
     <div class="login-box">
-      <a href="dashboard.php" class="brand">
-        <img src="assets/imgs/logo_monsel.png" alt="MONSEL" class="brand-logo">
+      <a class="brand">
+        <img src="assets/imgs/logo_monsel_black.png" alt="MONSEL" class="brand-logo">
         <div>
           <strong>MONSEL</strong>
           <span>Sistema de inventario</span>

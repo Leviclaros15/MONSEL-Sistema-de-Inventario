@@ -53,10 +53,35 @@ function badgeEstadoProyecto(string $estado): string
             <input type="text" name="q" class="search-input" placeholder="Buscar proyecto..." value="<?= htmlspecialchars($busqueda) ?>">
             <button type="submit" class="btn btn-outline">Buscar</button>
           </form>
-          <button class="btn btn-blue" onclick="document.getElementById('modalProyecto').classList.add('open')">+ Nuevo proyecto</button>
+          <button class="btn btn-blue" onclick="abrirModalProyectoAgregar()">+ Nuevo proyecto</button>
         </div>
 
-        <table>
+        <!-- Skeleton loading -->
+        <table id="skeletonTable" class="skeleton-hidden">
+          <thead>
+            <tr>
+              <th>Proyecto</th>
+              <th>Ubicación</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php for ($i = 0; $i < 5; $i++): ?>
+            <tr class="skeleton-row">
+              <td><div class="skeleton skeleton-text long"></div></td>
+              <td><div class="skeleton skeleton-text medium"></div></td>
+              <td><div class="skeleton skeleton-text short"></div></td>
+              <td><div class="skeleton skeleton-badge"></div></td>
+              <td><div class="skeleton skeleton-text short"></div></td>
+            </tr>
+            <?php endfor; ?>
+          </tbody>
+        </table>
+
+        <!-- Tabla real -->
+        <table id="realTable">
           <thead>
             <tr>
               <th>Proyecto</th>
@@ -77,6 +102,8 @@ function badgeEstadoProyecto(string $estado): string
                   <td><?= date('d/m/Y', strtotime($p['fecha'])) ?></td>
                   <td><?= badgeEstadoProyecto($p['estado']) ?></td>
                   <td class="action-icons">
+                    <button type="button" class="edit" title="Editar"
+                      onclick='abrirModalProyectoEditar(<?= json_encode($p, JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>&#9998;</button>
                     <form method="post" action="proyecto_eliminar.php" onsubmit="return confirm('¿Eliminar este proyecto?');" style="display:inline;">
                       <input type="hidden" name="id_proyecto" value="<?= $p['id_proyecto'] ?>">
                       <button type="submit" class="delete" title="Eliminar">&#128465;</button>
@@ -96,30 +123,33 @@ function badgeEstadoProyecto(string $estado): string
   </div>
 </div>
 
-<!-- Modal Nuevo proyecto -->
+<!-- Modal Agregar / Editar proyecto -->
 <div class="modal-overlay" id="modalProyecto">
   <div class="modal-box">
     <form method="post" action="proyecto_guardar.php">
       <div class="card-header">
-        <h3>Nuevo proyecto</h3>
-        <button type="button" class="close-x" onclick="document.getElementById('modalProyecto').classList.remove('open')">&#10005;</button>
+        <h3 id="modalTitulo">Nuevo proyecto</h3>
+        <button type="button" class="close-x" onclick="cerrarModalProyecto()">&#10005;</button>
       </div>
+
+      <input type="hidden" name="id_proyecto" id="f_id_proyecto" value="">
+
       <div class="form-grid">
         <div class="form-field full">
           <label>Nombre del proyecto *</label>
-          <input type="text" name="nombre_proyecto" placeholder="PR-005 Residencial Vista Hermosa" required>
+          <input type="text" name="nombre_proyecto" id="f_nombre_proyecto" placeholder="PR-005 Residencial Vista Hermosa" required>
         </div>
         <div class="form-field">
           <label>Ubicación *</label>
-          <input type="text" name="ubicacion" placeholder="San Salvador" required>
+          <input type="text" name="ubicacion" id="f_ubicacion" placeholder="San Salvador" required>
         </div>
         <div class="form-field">
           <label>Fecha *</label>
-          <input type="date" name="fecha" value="<?= date('Y-m-d') ?>" required>
+          <input type="date" name="fecha" id="f_fecha" value="<?= date('Y-m-d') ?>" required>
         </div>
         <div class="form-field full">
           <label>Estado *</label>
-          <select name="estado" required>
+          <select name="estado" id="f_estado" required>
             <option value="Pendiente">Pendiente</option>
             <option value="En progreso">En progreso</option>
             <option value="Completado">Completado</option>
@@ -127,7 +157,7 @@ function badgeEstadoProyecto(string $estado): string
         </div>
       </div>
       <div class="form-actions">
-        <button type="button" class="btn btn-outline" onclick="document.getElementById('modalProyecto').classList.remove('open')">Cancelar</button>
+        <button type="button" class="btn btn-outline" onclick="cerrarModalProyecto()">Cancelar</button>
         <button type="submit" class="btn btn-blue">Guardar</button>
       </div>
     </form>
@@ -135,9 +165,49 @@ function badgeEstadoProyecto(string $estado): string
 </div>
 
 <script>
+// Skeleton loading
+document.addEventListener('DOMContentLoaded', function() {
+  const skeletonTable = document.getElementById('skeletonTable');
+  const realTable = document.getElementById('realTable');
+
+  if (skeletonTable && realTable) {
+    skeletonTable.classList.remove('skeleton-hidden');
+    realTable.classList.add('skeleton-hidden');
+
+    setTimeout(function() {
+      skeletonTable.classList.add('skeleton-hidden');
+      realTable.classList.remove('skeleton-hidden');
+    }, 300);
+  }
+});
+
+function abrirModalProyectoAgregar() {
+  document.getElementById('f_id_proyecto').value = '';
+  document.getElementById('f_nombre_proyecto').value = '';
+  document.getElementById('f_ubicacion').value = '';
+  document.getElementById('f_fecha').value = '<?= date('Y-m-d') ?>';
+  document.getElementById('f_estado').value = 'Pendiente';
+  document.getElementById('modalTitulo').textContent = 'Nuevo proyecto';
+  document.getElementById('modalProyecto').classList.add('open');
+}
+
+function abrirModalProyectoEditar(p) {
+  document.getElementById('f_id_proyecto').value = p.id_proyecto;
+  document.getElementById('f_nombre_proyecto').value = p.nombre_proyecto;
+  document.getElementById('f_ubicacion').value = p.ubicacion;
+  document.getElementById('f_fecha').value = p.fecha;
+  document.getElementById('f_estado').value = p.estado;
+  document.getElementById('modalTitulo').textContent = 'Editar proyecto';
+  document.getElementById('modalProyecto').classList.add('open');
+}
+
+function cerrarModalProyecto() {
+  document.getElementById('modalProyecto').classList.remove('open');
+}
+
 document.addEventListener('click', function (e) {
   const overlay = document.getElementById('modalProyecto');
-  if (overlay && e.target === overlay) overlay.classList.remove('open');
+  if (overlay && e.target === overlay) cerrarModalProyecto();
 });
 </script>
 <script src="assets/js/main.js"></script>

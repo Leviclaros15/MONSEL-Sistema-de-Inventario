@@ -115,7 +115,38 @@ $errorMsg = flash_get('error');
           </div>
         </div>
 
-        <table>
+        <!-- Skeleton loading -->
+        <table id="skeletonTable" class="skeleton-hidden">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Categoría</th>
+              <th>Cantidad</th>
+              <th>Stock Mínimo</th>
+              <th>Ubicación</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php for ($i = 0; $i < 5; $i++): ?>
+            <tr class="skeleton-row">
+              <td><div class="skeleton skeleton-text short"></div></td>
+              <td><div class="skeleton skeleton-text medium"></div></td>
+              <td><div class="skeleton skeleton-text short"></div></td>
+              <td><div class="skeleton skeleton-text short"></div></td>
+              <td><div class="skeleton skeleton-text short"></div></td>
+              <td><div class="skeleton skeleton-text short"></div></td>
+              <td><div class="skeleton skeleton-badge"></div></td>
+              <td><div class="skeleton skeleton-text short"></div></td>
+            </tr>
+            <?php endfor; ?>
+          </tbody>
+        </table>
+
+        <!-- Tabla real -->
+        <table id="realTable">
           <thead>
             <tr>
               <th>Código</th>
@@ -133,7 +164,7 @@ $errorMsg = flash_get('error');
               <tr><td colspan="8" class="empty-state">No se encontraron materiales.</td></tr>
             <?php else: ?>
               <?php foreach ($materiales as $m): ?>
-                <?php 
+                <?php
                   $esAgotado = ((float)$m['cantidad'] <= 0);
                   $esBajoStock = ((float)$m['cantidad'] <= (float)$m['stock_minimo'] && !$esAgotado);
                 ?>
@@ -228,23 +259,12 @@ $errorMsg = flash_get('error');
           </select>
         </div>
         <div class="form-field">
-          <label>Cantidad * <span id="f_modal_cant_hint" style="font-weight:400; color:var(--text-muted); font-size:12px;"></span></label>
-          <input type="number" step="0.01" min="0" name="cantidad" id="f_cantidad" required>
-        </div>
-        <div class="form-field">
           <label>Stock Mínimo (Alerta) *</label>
           <input type="number" step="0.01" min="0" name="stock_minimo" id="f_stock_minimo" placeholder="0" required>
         </div>
         <div class="form-field">
           <label>Ubicación *</label>
           <input type="text" name="ubicacion" id="f_ubicacion" placeholder="Bodega A" required>
-        </div>
-        <div class="form-field">
-          <label>Estado *</label>
-          <select name="estado" id="f_estado" required>
-            <option value="Disponible">Disponible</option>
-            <option value="Agotado">Agotado</option>
-          </select>
         </div>
         <div class="form-field full">
           <label>Observaciones</label>
@@ -331,6 +351,23 @@ $errorMsg = flash_get('error');
 </div>
 
 <script>
+// Skeleton loading
+document.addEventListener('DOMContentLoaded', function() {
+  const skeletonTable = document.getElementById('skeletonTable');
+  const realTable = document.getElementById('realTable');
+
+  if (skeletonTable && realTable) {
+    skeletonTable.classList.remove('skeleton-hidden');
+    realTable.classList.add('skeleton-hidden');
+
+    // Simular tiempo de carga muy corto (en producción esto sería async)
+    setTimeout(function() {
+      skeletonTable.classList.add('skeleton-hidden');
+      realTable.classList.remove('skeleton-hidden');
+    }, 300);
+  }
+});
+
 function abrirModalGestionCategorias() {
   document.getElementById('modalGestionCategorias').classList.add('open');
 }

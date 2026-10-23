@@ -10,10 +10,10 @@ proporcionados.
 2. Panel principal (Dashboard) con KPIs reales
 3. Inventario (listado, búsqueda, agregar/editar/eliminar material)
 4. Registrar entrada / salida (con actualización automática de stock)
-5. Proyectos realizados (listado, búsqueda, agregar/eliminar proyecto)
+5. Proyectos realizados (listado, búsqueda, agregar/editar/eliminar proyecto)
+6. Gestión de usuarios (solo administradores - CRUD completo)
+7. Auditoría (solo administradores - historial de movimientos con filtros)
 
-El formulario "Agregar material" del mockup 6 está integrado como
-modal dentro de la pantalla de Inventario.
 
 ## Usuario de prueba
 
@@ -47,7 +47,10 @@ monsel_inventario/
 ├── movimiento_guardar.php        Procesa el movimiento y actualiza stock
 ├── proyectos.php                  Proyectos realizados + modal nuevo
 ├── proyecto_guardar.php           Guarda un proyecto nuevo (POST)
-└── proyecto_eliminar.php          Elimina un proyecto (POST)
+├── proyecto_eliminar.php          Elimina un proyecto (POST)
+├── usuarios.php                   Gestión de usuarios (solo admin, CRUD)
+├── usuario_guardar.php            Guarda/actualiza un usuario (POST)
+└── usuario_eliminar.php           Elimina un usuario (POST)
 ```
 
 ## Funcionalidad ya implementada
@@ -56,6 +59,8 @@ monsel_inventario/
   / `password_verify`).
 - Todas las consultas usan sentencias preparadas (PDO), para evitar
   inyección SQL.
+- **El stock solo se modifica mediante movimientos documentados** (entradas/salidas)
+  para mantener trazabilidad completa. No se permite editar el stock directamente.
 - Al registrar una **entrada**, el stock del material aumenta. Al
   registrar una **salida**, disminuye — y el sistema **bloquea** la
   operación si no hay stock suficiente.
@@ -64,16 +69,9 @@ monsel_inventario/
   a **Disponible**.
 - El dashboard calcula sus KPIs en tiempo real desde la base de datos
   (no son datos fijos).
-- Búsqueda en inventario y en proyectos.
+- Búsqueda en inventario, proyectos y auditoría.
 - Mensajes de éxito/error después de cada acción (agregar, editar,
   eliminar, registrar movimiento).
+- **Skeleton loading** en todas las tablas principales para una experiencia
+  de usuario más fluida mientras cargan los datos.
 
-## Posibles siguientes pasos
-
-- Agregar roles (administrador vs. técnico) con permisos distintos.
-- Agregar edición de proyectos (actualmente solo se crean y eliminan).
-- Agregar alertas visuales cuando un material llegue a su stock mínimo
-  (la columna `stock_minimo` ya existe en la base de datos, lista para
-  usarse).
-- Agregar reportes/exportación (PDF o Excel) para la sección de
-  Reportes del mockup original.
