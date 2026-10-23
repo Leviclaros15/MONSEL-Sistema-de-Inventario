@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <form method="post" novalidate>
         <div class="field">
           <label for="usuario">Usuario</label>
-          <input type="text" id="usuario" name="usuario" placeholder="emely" value="<?= htmlspecialchars($_POST['usuario'] ?? '') ?>" required autofocus>
+          <input type="text" id="usuario" name="usuario" placeholder="Usuario" value="<?= htmlspecialchars($_POST['usuario'] ?? '') ?>" required autofocus>
         </div>
         <div class="field">
           <label for="password">Contraseña</label>
@@ -91,7 +91,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button type="submit" class="btn-primary">Iniciar sesión</button>
       </form>
 
-      <p class="login-hint">Usuario de prueba: <strong>emely</strong> &nbsp;|&nbsp; Contraseña: <strong>123456</strong></p>
     </div>
   </div>
 </div>

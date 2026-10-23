@@ -23,6 +23,8 @@ function nav_active(string $file, string $current): string
     <a href="inventario.php" class="<?= nav_active('inventario.php', $currentPage) ?>"><img src="assets/icons/inventory.svg" alt="" class="ico"> Inventario</a>
     <a href="movimiento.php" class="<?= nav_active('movimiento.php', $currentPage) ?>"><img src="assets/icons/transfer.svg" alt="" class="ico"> Entradas / Salidas</a>
     <a href="proyectos.php" class="<?= nav_active('proyectos.php', $currentPage) ?>"><img src="assets/icons/projects.svg" alt="" class="ico"> Proyectos realizados</a>
+    <a href="auditoria.php" class="<?= nav_active('auditoria.php', $currentPage) ?>"><img src="assets/icons/audit.svg" alt="" class="ico"> Auditoría</a>
+
   </nav>
   <div class="logout">
     <a href="logout.php"><img src="assets/icons/logout.svg" alt="" class="ico"> Cerrar sesión</a>
